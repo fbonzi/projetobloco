@@ -1,0 +1,76 @@
+---
+  - name: Playbook GLPI Ansible
+    hosts: projeto
+    remote_user: root
+ 
+    vars:
+      glpi_download_url: https://github.com/glpi-project/glpi/releases/download/9.2.1/glpi-9.2.1.tgz
+      glpi_local_path: /root/glpi.tar.bz2
+      httpd_document_root: /var/www/html/
+      mysql_glpi_password: infnet2018
+
+    tasks:
+      - name: Baixando GLPI da internet
+        get_url: url="{{ glpi_download_url }}"  dest="{{ glpi_local_path }}"
+
+      - name: Instalando os requisitos exigidos pelo GLPI
+        yum: name={{ item }} state=present
+        with_items:
+          - httpd
+          - mod_ssl
+          - php
+          - php-ldap
+          - mysql-server
+          - php-mysql
+          - php-mbstring
+          - php-gd
+          - MySQL-python
+        notify:
+          - restart apache
+
+
+      - stat: path="{{httpd_document_root}}/index.html"
+        register: index_html
+
+      - name: Copiando iptables file 
+        template: src=iptables dest=/etc/sysconfig/iptables
+        notify:
+          - restart iptables
+          - restart fail2ban
+
+      - name: Extraindo glpi para /var/www/html
+        unarchive: copy=no src="{{glpi_local_path}}" dest="{{httpd_document_root}}" owner=apache group=apache
+        when: index_html.stat.exists == False
+
+      - name: Copiando index.html file para documentroot
+        copy: src=index.html dest="{{ httpd_document_root }}" owner=apache group=apache
+
+      - name: Verificando arquivo apache user
+        file: dest="{{ httpd_document_root }}" owner=apache group=apache recurse=yes
+
+      - name: Start and Enable httpd, mysqld
+        service: name={{ item }} state=started enabled=yes
+        with_items:
+          - httpd
+          - mysqld
+
+      - name: Criando glpi database no mysql
+        mysql_db: name=glpi
+
+      - name: Criando glpi user e atribuindo permissao glpi database
+        mysql_user: name=glpi password="{{ mysql_glpi_password }}" priv=glpi.*:ALL
+
+      
+      - name: Print post setup instructions
+        debug: msg="PROJETO INFNET - GLPI INSTALADO"
+
+
+    handlers:
+      - name: restart apache
+        service: name=httpd state=restarted
+
+      - name: restart iptables
+        service: name=iptables state=restarted
+
+      - name: restart fail2ban
+        service: name=fail2ban state=restarted
