@@ -1,13 +1,6 @@
-# Projeto de bloco Etapas 2 e 3
+# Projeto de bloco - Deploy GLPI com docker na infraestrutura Amazon AWS
 
-Criação de um playbook para automatizar a instalação do GLPI em outro servidor.
+Repositório criado para orientar os estudos, de implementação de uma aplicação web chamada GLPI. Esta ferramenta servirá para gerenciar os chamado de suporte da empresa hipotética, Terra Média LTDA. 
 
-Servidor host: X-Wing31
-Servidor que irá receber a instalação: server01
-
-
-Grupo de Host 
-[projeto]
-192.168.1.25 
-
+Este repositório contém alguns arquivos que foram utilizados ao longo do processo de conclusão do Projeto de Bloco.
 
